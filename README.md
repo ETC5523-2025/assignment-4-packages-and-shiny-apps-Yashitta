@@ -125,4 +125,6 @@ a given scenario grid:
 ## Documentation
 
 - Package repo:
-  <https://github.com/ETC5523-2025/assignment-4-packages-and-shiny-apps-Yashitta.git>
+  <https://github.com/ETC5523-2025/assignment-4-packages-and-shiny-apps-Yashitta.git>  
+- Pkgdown site:
+  <https://etc5523-2025.github.io/assignment-4-packages-and-shiny-apps-Yashitta/>
