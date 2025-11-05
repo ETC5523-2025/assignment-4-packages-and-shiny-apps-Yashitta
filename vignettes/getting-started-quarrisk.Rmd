@@ -1,0 +1,225 @@
+---
+title: "Introduction to quarrisk"
+author: "Yashitta Bawa"
+date: "`r format(Sys.Date(), '%-d %B %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to quarrisk}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+collapse = TRUE,
+comment = "#>",
+fig.width = 7,
+fig.height = 5,
+warning = FALSE,
+message = FALSE
+)
+```
+
+## Introduction
+
+The **quarrisk** package provides an interactive Shiny dashboard and helper functions to explore **quarantine outbreak risk** under different assumptions about the basic reproduction number (**R₀**), vaccine effectiveness (**VE**), and vaccination **coverage**.
+
+It includes three tidy datasets:
+
+- `ob_probs_travellers`: outbreak probabilities by **traveller** and **worker** pathways  
+- `ob_timings_summary`: **median (50%)** and **tail (95%)** days until outbreak  
+- `ob_summary`: a joined grid of probabilities + timings across **R₀ × VE × coverage**
+
+Use the dashboard to scan scenarios quickly, or use the datasets/functions for programmatic analysis.
+
+## Installation
+
+Install from GitHub:
+
+```{r setup}
+
+install.packages("remotes")
+remotes::install_github("ETC5523-2025/assignment-4-packages-and-shiny-apps-Yashitta")
+
+```
+
+## Load the packages 
+
+```{r}
+
+library(quarrisk)
+library(dplyr)
+library(ggplot2)
+library(scales)
+theme_set(theme_bw(base_size = 13))
+
+```
+
+## Package Dataset 
+
+### 1. Outbreak probabilities (traveller vs worker)
+
+```{r}
+
+data(ob_probs_travellers)
+glimpse(ob_probs_travellers)
+head(ob_probs_travellers)
+
+```
+
+**Key variables**
+- r0: basic reproduction number
+- ve: vaccine effectiveness (0–1)
+- coverage: population coverage (0–1)
+- traveller_ob_prob, worker_ob_prob: outbreak probabilities by pathway
+
+### 2. Outbreak timing summary
+
+```{r}
+
+data(ob_timings_summary)
+glimpse(ob_timings_summary)
+head(ob_timings_summary)
+
+```
+
+**Key variables**
+- chance50: median days until outbreak
+- chance95: tail (95th percentile) days until outbreak
+
+### 3. Combined grid (probabilities + timings)
+
+```{r}
+
+data(ob_summary)
+dplyr::glimpse(ob_summary)
+
+```
+
+This is a convenient join across the full scenario grid (R₀ × VE × coverage).
+
+## Quick Start: Interactive Dashboard
+
+Launch the Shiny dashboard:
+
+```{r}
+
+run_app()
+
+```
+
+The app provides three tabs:
+- **Overview** — Nearest scenario to your chosen R₀/VE/coverage, value boxes, quick traveller vs worker comparison
+- **Risk Explorer** — Lines (probability vs VE) and heatmap (probability over R₀ × coverage)
+- **Timing Summary** — Median (chance50) and tail (chance95) days vs coverage/R₀
+
+## Basic Exploration
+
+Compare traveller vs worker probabilities at a fixed scenario
+
+```{r}
+
+picked <- ob_summary |>
+  filter(r0 == 5, ve == 0.6, coverage == 0.5)
+
+picked |>
+  transmute(
+    r0, ve, coverage,
+    traveller = traveller_ob_prob,
+    worker    = worker_ob_prob,
+    gap       = traveller - worker)
+
+```
+
+A quick bar comparison:
+
+```{r}
+
+bar <- tidyr::pivot_longer(
+  picked,
+  c(traveller_ob_prob, worker_ob_prob),
+  names_to = "pathway", values_to = "prob")
+
+ggplot(bar, aes(pathway, prob)) +
+  geom_col(width = 0.6) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = NULL, y = "Outbreak probability",
+       title = "Traveller vs Worker (R0=5, VE=60%, Coverage=50%)")
+
+```
+
+## Probability vs VE at fixed R₀ & coverage
+
+Use the exported helper plot_risk_vs_ve():
+
+```{r}
+
+p <- plot_risk_vs_ve(
+  r0 = 5,
+  coverage = 0.5,
+  data = ob_summary)
+p
+```
+
+## Timing profiles
+
+Median days until outbreak across coverage (for fixed R₀ and VE):
+
+```{r}
+
+ob_summary |>
+  filter(r0 == 5, ve == 0.6) |>
+  arrange(coverage) |>
+  ggplot(aes(coverage, chance50)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  scale_x_continuous(labels = percent) +
+  labs(x = "Coverage", y = "Median days (chance50)",
+       title = "Timing vs Coverage at R0=5, VE=60%")
+
+```
+
+**Tail days vs R₀ (for fixed VE and coverage):**
+
+```{r}
+
+ob_summary |>
+  filter(ve == 0.6, coverage == 0.5) |>
+  arrange(r0) |>
+  ggplot(aes(r0, chance95)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  labs(x = "R0", y = "Tail days (chance95)",
+       title = "Tail Timing vs R0 at VE=60%, Coverage=50%")
+
+```
+
+## Helper Functions
+
+- `slice_scenario(r0, ve, coverage)` — returns rows matching (or nearest to) a scenario
+- `plot_risk_vs_ve(r0, coverage, data)` — line plot of outbreak probability vs VE
+Example:
+
+```{r}
+
+slice_scenario(ob_summary, r0 = 5, ve = 0.6, coverage = 0.5)
+
+```
+
+## Best Practices
+
+- **Use percentages** when scanning heatmaps/lines (format VE and coverage with scales::percent).
+- **Compare pathways** — traveller vs worker risks can diverge at the same scenario.
+- **Look at timing, not just probability** — longer chance50/chance95 may buy response time.
+- **Context matters** — the same probability can imply different operational risks depending on volume, import controls, and response capacity.
+
+## Next Steps
+
+- Launch the dashboard: `run_app()`
+- Browse the function docs: `?run_app`, `?slice_scenario`, `?plot_risk_vs_ve`
+- Explore datasets: `?ob_summary`, `?ob_probs_travellers`, `?ob_timings_summary`
+
+## Getting Help
+
+- Package repo: <https://github.com/ETC5523-2025/assignment-4-packages-and-shiny-apps-Yashitta.git>
+- File an issue: <https://github.com/ETC5523-2025/assignment-4-packages-and-shiny-apps-Yashitta.git/issues>

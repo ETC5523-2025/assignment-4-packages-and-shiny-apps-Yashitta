@@ -3,7 +3,7 @@ Type: Package
 Title: Interactive Outbreak Risk Explorer for R0, Vaccine Effectiveness and Coverage
 Version: 1.0.0.0000
 Authors@R: 
-    person("Yashitta", "Bawa", , "yashittabawa@student.monash.edu", role = c("aut", "cre"))
+    person("Yashitta", "Bawa", , "ybaw0002@student.monash.edu", role = c("aut", "cre"))
 Description: Provides tools and an interactive Shiny dashboard to explore
     quarantine/outbreak risk under different epidemic scenarios. Includes
     datasets of outbreak probabilities and timing summaries across grids of
@@ -35,5 +35,6 @@ Suggests:
     rmarkdown,
     testthat (>= 3.0.0),
     pkgdown
+VignetteBuilder: knitr
 LazyData: true
 URL: https://github.com/ETC5523-2025/assignment-4-packages-and-shiny-apps-Yashitta.git
