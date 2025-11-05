@@ -1,0 +1,238 @@
+---
+title: "Dashboard User Guide"
+author: "Yashitta Bawa"
+date: "5th November 2025"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Dashboard User Guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7, fig.height = 5
+)
+```
+
+## Introduction
+
+The `quarrisk` interactive dashboard helps you explore **quarantine outbreak risk** under different assumptions about the basic reproduction number (**R₀**), vaccine effectiveness (**VE**), and vaccination **coverage**.  
+This guide walks you through each feature and explains how to interpret the visualizations.
+
+---
+
+## Launching the Dashboard
+
+Load the package and launch the app:
+
+```{r launch, eval=FALSE}
+library(quarrisk)
+
+# Launch with default settings
+run_app()
+
+# Launch on a specific port (useful if default is busy)
+run_app(port = 3838)
+
+# Launch without auto-opening a browser
+run_app(launch.browser = FALSE)
+```
+
+The dashboard opens in your default browser. If it doesn’t, check the R console for the local URL (e.g., `http://127.0.0.1:####`).
+
+---
+
+## Dashboard Overview
+
+The dashboard has three tabs in the sidebar:
+
+1. **Overview** — Quick scenario summary, value boxes, and traveller vs worker comparison  
+2. **Risk Explorer** — Probability lines by VE and a heatmap across R₀ × coverage  
+3. **Timing Summary** — Median (chance50) and tail (chance95) days until outbreak
+
+Each tab has its own controls, visualizations, and interpretation tips.
+
+---
+
+## Tab 1: Overview
+
+### Purpose
+Provide a fast, high-level snapshot for a selected scenario (R₀, VE, and coverage), comparing **traveller** vs **worker** outbreak probability and showing nearest-scenario summaries.
+
+### Key Features
+
+#### Value Boxes
+- **Nearest Scenario**: Shows the closest grid point to your chosen R₀/VE/coverage  
+- **Traveller vs Worker**: Side-by-side outbreak probabilities  
+- **Quick Timing**: Median (chance50) and tail (chance95) days until outbreak
+
+#### Information Boxes
+- **About the Parameters**: What R₀, VE, and coverage mean in the model  
+- **Data Source Notes**: How the tidy datasets were assembled
+
+#### Comparison Plot
+A simple bar or dot comparison for traveller vs worker at the current scenario.
+
+**How to interact**
+- Adjust R₀, VE, and coverage with the controls  
+- Watch value boxes and comparison chart update in real time
+
+**What to look for**
+- Differences between traveller and worker pathways at the same scenario  
+- How scenario movements (e.g., higher VE) shift probabilities
+
+### Interpretation Tips
+1. **Parameter sensitivity**: Increasing VE or coverage usually lowers outbreak probability.  
+2. **Operational context**: Similar probabilities can imply different risks depending on volumes and response capacity.  
+3. **Nearest scenario**: Values come from the closest grid point; small rounding is expected.
+
+---
+
+## Tab 2: Risk Explorer
+
+### Purpose
+Explore how outbreak probability responds to **VE** (line plot) and across the **R₀ × coverage** grid (heatmap).
+
+### Controls
+- **Fix R₀ & coverage** for the line plot (probability vs VE)  
+- **Select pathway** (traveller / worker / both)  
+- **Heatmap settings** (toggle labels, percent format)
+
+### Tab 2a: Line (Probability vs VE)
+- **X-axis**: VE (0–1)  
+- **Y-axis**: Outbreak probability (0–1, commonly shown as %)  
+- **Lines**: Traveller vs worker (if both selected)
+
+**How to use**
+- Hold R₀ and coverage fixed, sweep VE to see reduction curves  
+- Compare pathway curves to gauge sensitivity
+
+**What to look for**
+- **Thresholds** where probability drops quickly  
+- **Gaps** between pathways at equal VE
+
+### Tab 2b: Heatmap (R₀ × Coverage)
+- **X-axis**: Coverage  
+- **Y-axis**: R₀  
+- **Fill**: Outbreak probability (percent)
+
+**How to use**
+- Scan for **cooler regions** (lower probability) at higher VE/coverage  
+- Identify **hot zones** at high R₀ and low coverage
+
+**Interpretation**
+- Higher R₀ generally raises risk; higher coverage (and VE) dampens it  
+- Use percent labels to compare grid cells quickly
+
+---
+
+## Tab 3: Timing Summary
+
+### Purpose
+Understand **when** outbreaks might occur: median (chance50) and tail (chance95) days until outbreak, across scenarios.
+
+### Layout & Features
+- Toggle **chance50** and **chance95**  
+- **Lines over coverage** at fixed R₀ & VE  
+- **Lines over R₀** at fixed VE & coverage  
+- Option to display both metrics together for context
+
+**How to read**
+- Longer times suggest more lead time for detection/response  
+- Tail days (chance95) indicate worst-case waiting times
+
+**What to look for**
+- Whether improving VE/coverage meaningfully extends chance50/chance95  
+- Sensitivity of timing to R₀ at fixed VE/coverage
+
+---
+
+## General Dashboard Features
+
+### Navigation
+- **Sidebar** to switch tabs  
+- **Active tab** highlighted  
+- Collapsible info boxes for background & tips
+
+### Interactivity
+- **Hover** for precise values (percents shown with `%`)  
+- **Legend toggles** (where available) to show/hide series  
+- **Download**: Use any built-in table/plot export buttons
+
+### Performance Tips
+1. Use a modern browser (Chrome/Firefox/Safari/Edge).  
+2. Avoid excessively fine slider steps if rendering slows.  
+3. If a plot is busy, hide labels or display one pathway at a time.
+
+---
+
+## Common Questions
+
+### Why do values change only at certain points?
+The underlying data is a scenario grid; inputs snap to the nearest grid point for display.
+
+### Why do traveller and worker differ?
+They represent distinct introduction pathways with different modeled probabilities.
+
+### Can I export numbers I see?
+Yes—use the underlying datasets programmatically:
+
+```{r datasets, eval=FALSE}
+data(ob_summary, package = "quarrisk")
+data(ob_probs_travellers, package = "quarrisk")
+data(ob_timings_summary, package = "quarrisk")
+
+# Example: pull a specific scenario
+dplyr::filter(ob_summary, r0 == 5, ve == 0.6, coverage == 0.5)
+```
+
+### How do I cite or report values?
+Report R₀, VE, coverage, pathway, and whether you’re using chance50 or chance95.
+
+---
+
+## Quick Programmatic Examples
+
+```{r examples, eval=FALSE}
+library(quarrisk)
+library(dplyr)
+library(ggplot2)
+library(scales)
+theme_set(theme_bw(base_size = 13))
+
+# Slice a scenario
+data(ob_summary)
+slice <- ob_summary |>
+  dplyr::filter(r0 == 5, ve == 0.6, coverage == 0.5)
+slice
+
+# Helper plot: probability vs VE at fixed R0 & coverage
+# p <- plot_risk_vs_ve(r0 = 5, coverage = 0.5, data = ob_summary)
+# p
+```
+
+---
+
+## Troubleshooting
+
+- **Vignette not visible on the website**  
+  Make sure the file is under `vignettes/` and you’ve rebuilt the site (and pushed if using GitHub Pages/Actions).
+
+- **Site didn’t update**  
+  If using Actions, check the “pkgdown” workflow logs on GitHub. If using `gh-pages` or `/docs`, re-run `pkgdown::build_site()` and push the generated content/branch.
+
+- **Plots slow to render**  
+  Reduce the number of labels or pathways shown, or widen the browser window.
+
+---
+
+## See Also
+
+- `?run_app` — Launch the dashboard  
+- `?ob_summary`, `?ob_probs_travellers`, `?ob_timings_summary` — Datasets  
+- `?slice_scenario`, `?plot_risk_vs_ve` — Helper functions

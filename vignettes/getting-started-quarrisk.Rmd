@@ -1,7 +1,7 @@
 ---
 title: "Introduction to quarrisk"
 author: "Yashitta Bawa"
-date: "`r format(Sys.Date(), '%-d %B %Y')`"
+date: "5th November 2025"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Introduction to quarrisk}
@@ -36,21 +36,26 @@ Use the dashboard to scan scenarios quickly, or use the datasets/functions for p
 
 Install from GitHub:
 
-```{r setup}
-
+```{r installation, eval=FALSE}
+# Install devtools if you haven't already
 install.packages("remotes")
+
+# Install quarrisk
 remotes::install_github("ETC5523-2025/assignment-4-packages-and-shiny-apps-Yashitta")
 
 ```
 
 ## Load the packages 
 
-```{r}
+```{r load-package, eval=FALSE}
 
 library(quarrisk)
 library(dplyr)
 library(ggplot2)
 library(scales)
+library(knitr)
+library(tidyverse)
+library(kableExtra)
 theme_set(theme_bw(base_size = 13))
 
 ```
@@ -59,11 +64,21 @@ theme_set(theme_bw(base_size = 13))
 
 ### 1. Outbreak probabilities (traveller vs worker)
 
-```{r}
+```{r probs-table, message=FALSE, warning=FALSE}
 
-data(ob_probs_travellers)
-glimpse(ob_probs_travellers)
-head(ob_probs_travellers)
+data(ob_probs_travellers, package = "quarrisk")
+
+ob_probs_travellers |>
+  dplyr::transmute(
+    r0, ve, coverage,
+    `Traveller prob` = scales::percent(traveller_ob_prob, accuracy = 0.01),
+    `Worker prob`    = scales::percent(worker_ob_prob,    accuracy = 0.01)
+  ) |>
+  head(6) |>
+  knitr::kable(
+    format = "pipe",
+    col.names = c("R₀", "VE", "Coverage", "Traveller prob", "Worker prob"),
+    align = "rrrcc")
 
 ```
 
@@ -75,11 +90,21 @@ head(ob_probs_travellers)
 
 ### 2. Outbreak timing summary
 
-```{r}
+```{r timings-table, message=FALSE, warning=FALSE}
 
-data(ob_timings_summary)
-glimpse(ob_timings_summary)
-head(ob_timings_summary)
+data(ob_timings_summary, package = "quarrisk")
+
+ob_timings_summary |>
+  dplyr::transmute(
+    r0, ve, coverage,
+    `Median days (chance50)` = round(chance50, 2),
+    `Tail days (chance95)`   = round(chance95, 2)
+  ) |>
+  head(6) |>
+  knitr::kable(
+    format    = "pipe",
+    col.names = c("R₀","VE","Coverage","Median days (chance50)","Tail days (chance95)"),
+    align     = "rrrcc")
 
 ```
 
@@ -89,10 +114,27 @@ head(ob_timings_summary)
 
 ### 3. Combined grid (probabilities + timings)
 
-```{r}
+```{r summary-table, message=FALSE, warning=FALSE}
 
-data(ob_summary)
-dplyr::glimpse(ob_summary)
+data(ob_summary, package = "quarrisk")
+
+ob_summary |>
+  dplyr::mutate(
+    traveller_ob_prob = scales::percent(traveller_ob_prob, accuracy = 0.01),
+    worker_ob_prob    = scales::percent(worker_ob_prob,    accuracy = 0.01),
+    chance50 = round(chance50, 1),
+    chance95 = round(chance95, 1)
+  ) |>
+  dplyr::select(r0, ve, coverage,
+                traveller_ob_prob, worker_ob_prob,
+                chance50, chance95) |>
+  head(6) |>
+  knitr::kable(
+    format    = "pipe",
+    col.names = c("R₀", "VE", "Coverage",
+                  "Traveller prob", "Worker prob",
+                  "Median days", "Tail days"),
+    align     = "rrrccrr")
 
 ```
 
@@ -102,7 +144,7 @@ This is a convenient join across the full scenario grid (R₀ × VE × coverage)
 
 Launch the Shiny dashboard:
 
-```{r}
+```{r run-app, eval=FALSE}
 
 run_app()
 
@@ -117,17 +159,28 @@ The app provides three tabs:
 
 Compare traveller vs worker probabilities at a fixed scenario
 
-```{r}
+```{r picked-table, message=FALSE, warning=FALSE}
 
 picked <- ob_summary |>
-  filter(r0 == 5, ve == 0.6, coverage == 0.5)
-
-picked |>
-  transmute(
+  dplyr::filter(r0 == 5, ve == 0.6, coverage == 0.5) |>
+  dplyr::transmute(
     r0, ve, coverage,
     traveller = traveller_ob_prob,
     worker    = worker_ob_prob,
-    gap       = traveller - worker)
+    gap       = traveller - worker
+  )
+
+picked |>
+  dplyr::transmute(
+    r0, ve, coverage,
+    `Traveller prob` = scales::percent(traveller, accuracy = 0.01),
+    `Worker prob`    = scales::percent(worker,    accuracy = 0.01),
+    `Gap`            = scales::percent(gap,       accuracy = 0.01)
+  ) |>
+  knitr::kable(
+    format    = "pipe",
+    col.names = c("R₀","VE","Coverage","Traveller prob","Worker prob","Gap"),
+    align     = "rrrccc")
 
 ```
 
@@ -135,16 +188,30 @@ A quick bar comparison:
 
 ```{r}
 
-bar <- tidyr::pivot_longer(
-  picked,
-  c(traveller_ob_prob, worker_ob_prob),
-  names_to = "pathway", values_to = "prob")
+bar <- picked |>
+  tidyr::pivot_longer(
+    cols = tidyselect::any_of(c("traveller_ob_prob","worker_ob_prob","traveller","worker")),
+    names_to = "pathway", values_to = "prob"
+  ) |>
+  dplyr::filter(!is.na(prob)) |>
+  dplyr::mutate(
+    pathway = dplyr::recode(
+      pathway,
+      traveller_ob_prob = "Traveller",
+      worker_ob_prob    = "Worker",
+      traveller         = "Traveller",
+      worker            = "Worker"
+    )
+  )
 
-ggplot(bar, aes(pathway, prob)) +
-  geom_col(width = 0.6) +
-  scale_y_continuous(labels = scales::percent) +
-  labs(x = NULL, y = "Outbreak probability",
-       title = "Traveller vs Worker (R0=5, VE=60%, Coverage=50%)")
+ggplot2::ggplot(bar, ggplot2::aes(pathway, prob, fill = pathway)) +
+  ggplot2::geom_col(width = 0.6) +
+  ggplot2::scale_y_continuous(labels = scales::percent) +
+  ggplot2::scale_fill_manual(values = c("Traveller" = "#34b679", "Worker" = "#7b4397")) +
+  ggplot2::labs(x = NULL, y = "Outbreak probability",
+                title = "Traveller vs Worker (R0=5, VE=60%, Coverage=50%)") +
+  ggplot2::theme_bw(base_size = 13) +
+  ggplot2::theme(legend.position = "none")
 
 ```
 
@@ -152,45 +219,68 @@ ggplot(bar, aes(pathway, prob)) +
 
 Use the exported helper plot_risk_vs_ve():
 
-```{r}
+```{r risk-vs-ve, message=FALSE, warning=FALSE}
 
-p <- plot_risk_vs_ve(
-  r0 = 5,
-  coverage = 0.5,
-  data = ob_summary)
-p
+r0_val  <- 5
+cov_val <- 0.5
+
+p <- ob_summary |>
+  dplyr::filter(r0 == r0_val, coverage == cov_val) |>
+  tidyr::pivot_longer(
+    c(traveller_ob_prob, worker_ob_prob),
+    names_to = "pathway", values_to = "prob"
+  ) |>
+  dplyr::mutate(
+    pathway = dplyr::recode(pathway,
+      traveller_ob_prob = "Traveller",
+      worker_ob_prob    = "Worker"
+    )
+  )
+
+ggplot2::ggplot(p, ggplot2::aes(ve, prob, linetype = pathway)) +
+  ggplot2::geom_line(linewidth = 1) +
+  ggplot2::scale_y_continuous(labels = scales::percent) +
+  ggplot2::labs(
+    x = "VE", y = "Outbreak probability", linetype = "Pathway",
+    title = sprintf("R0 = %.1f, coverage = %.2f", r0_val, cov_val))
+
 ```
 
 ## Timing profiles
 
 Median days until outbreak across coverage (for fixed R₀ and VE):
 
-```{r}
+```{r timing-coverage, message=FALSE, warning=FALSE}
 
-ob_summary |>
-  filter(r0 == 5, ve == 0.6) |>
-  arrange(coverage) |>
-  ggplot(aes(coverage, chance50)) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 1.5) +
-  scale_x_continuous(labels = percent) +
-  labs(x = "Coverage", y = "Median days (chance50)",
-       title = "Timing vs Coverage at R0=5, VE=60%")
+tc <- ob_summary |>
+  dplyr::filter(r0 == 5, ve == 0.6) |>
+  dplyr::arrange(coverage)
+
+ggplot2::ggplot(tc, ggplot2::aes(coverage, chance50)) +
+  ggplot2::geom_line(linewidth = 1) +
+  ggplot2::geom_point(size = 1.5) +
+  ggplot2::scale_x_continuous(labels = scales::percent) +
+  ggplot2::labs(
+    x = "Coverage", y = "Median days (chance50)",
+    title = "Timing vs Coverage at R0=5, VE=60%"
+  )
 
 ```
 
 **Tail days vs R₀ (for fixed VE and coverage):**
 
-```{r}
+```{r tail-timing, message=FALSE, warning=FALSE}
 
-ob_summary |>
-  filter(ve == 0.6, coverage == 0.5) |>
-  arrange(r0) |>
-  ggplot(aes(r0, chance95)) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 1.5) +
-  labs(x = "R0", y = "Tail days (chance95)",
-       title = "Tail Timing vs R0 at VE=60%, Coverage=50%")
+tail_timing_by_r0 <- ob_summary |>
+  dplyr::filter(ve == 0.6, coverage == 0.5) |>
+  dplyr::arrange(r0)
+
+ggplot2::ggplot(tail_timing_by_r0, ggplot2::aes(r0, chance95)) +
+  ggplot2::geom_line(linewidth = 1) +
+  ggplot2::geom_point(size = 1.5) +
+  ggplot2::labs(
+    x = "R0", y = "Tail days (chance95)",
+    title = "Tail Timing vs R0 at VE=60%, Coverage=50%")
 
 ```
 
@@ -200,9 +290,21 @@ ob_summary |>
 - `plot_risk_vs_ve(r0, coverage, data)` — line plot of outbreak probability vs VE
 Example:
 
-```{r}
+```{r slice-table, message=FALSE, warning=FALSE}
 
-slice_scenario(ob_summary, r0 = 5, ve = 0.6, coverage = 0.5)
+tab <- quarrisk::slice_scenario(ob_summary, r0 = 5, ve = 0.6, coverage = 0.5) |>
+  dplyr::transmute(
+    r0, ve, coverage,
+    `Traveller prob` = scales::percent(traveller_ob_prob, accuracy = 0.01),
+    `Worker prob`    = scales::percent(worker_ob_prob,    accuracy = 0.01),
+    `Median days`    = round(chance50, 2),
+    `Tail days`      = round(chance95, 2)
+  )
+
+knitr::kable(tab, format="pipe",
+             col.names=c("R₀","VE","Coverage","Traveller prob",
+                         "Worker prob","Median days","Tail days"),
+             align="rrrccrr")
 
 ```
 

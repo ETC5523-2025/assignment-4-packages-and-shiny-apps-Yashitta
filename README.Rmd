@@ -94,15 +94,27 @@ run_app()
 
 Compute the gap between traveller and worker outbreak probabilities for a given scenario grid:
 
-```{r gap-table, echo = FALSE}
+```{r gap-table, echo=FALSE, message=FALSE, warning=FALSE}
 
 library(dplyr)
+library(knitr)
+library(scales)
 
-ob_summary |>
-  mutate(gap = traveller_ob_prob - worker_ob_prob) |>
-  arrange(desc(abs(gap))) |>
+tab <- ob_summary |>
+  mutate(
+    gap = traveller_ob_prob - worker_ob_prob,
+    across(c(traveller_ob_prob, 
+             worker_ob_prob, gap), 
+           ~ percent(.x, accuracy = 0.1))) |>
+  arrange(desc(abs(readr::parse_number(gap)))) |>
   select(r0, ve, coverage, traveller_ob_prob, worker_ob_prob, gap) |>
-  head()
+  head(6)
+
+kable(
+  tab,
+  format = "pipe",    # GitHub-friendly markdown table
+  col.names = c("R₀", "VE", "Coverage", "Traveller prob", "Worker prob", "Gap"),
+  align = "rrrccc")
 
 ```
 

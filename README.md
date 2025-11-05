@@ -97,23 +97,14 @@ run_app()
 Compute the gap between traveller and worker outbreak probabilities for
 a given scenario grid:
 
-    #> 
-    #> Attaching package: 'dplyr'
-    #> The following objects are masked from 'package:stats':
-    #> 
-    #>     filter, lag
-    #> The following objects are masked from 'package:base':
-    #> 
-    #>     intersect, setdiff, setequal, union
-    #> # A tibble: 6 × 6
-    #>      r0    ve coverage traveller_ob_prob worker_ob_prob    gap
-    #>   <dbl> <dbl>    <dbl>             <dbl>          <dbl>  <dbl>
-    #> 1    10   0.5      0.1            0.0210          0.203 -0.182
-    #> 2    10   0.5      0.2            0.0210          0.200 -0.179
-    #> 3     9   0.5      0.1            0.0203          0.197 -0.177
-    #> 4    10   0.5      0.3            0.0196          0.195 -0.176
-    #> 5     9   0.5      0.2            0.0205          0.191 -0.171
-    #> 6    10   0.6      0.1            0.0175          0.188 -0.171
+|  R₀ |  VE | Coverage | Traveller prob | Worker prob |  Gap   |
+|----:|----:|---------:|:--------------:|:-----------:|:------:|
+|  10 | 0.5 |      0.1 |      2.1%      |    20.3%    | -18.2% |
+|  10 | 0.5 |      0.2 |      2.1%      |    20.0%    | -17.9% |
+|   9 | 0.5 |      0.1 |      2.0%      |    19.7%    | -17.7% |
+|  10 | 0.5 |      0.3 |      2.0%      |    19.5%    | -17.6% |
+|   9 | 0.5 |      0.2 |      2.0%      |    19.1%    | -17.1% |
+|  10 | 0.6 |      0.1 |      1.8%      |    18.8%    | -17.1% |
 
 ## Available Datasets
 
