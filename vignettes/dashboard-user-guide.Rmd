@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 ## Introduction
 
 The `quarrisk` interactive dashboard helps you explore **quarantine outbreak risk** under different assumptions about the basic reproduction number (**R₀**), vaccine effectiveness (**VE**), and vaccination **coverage**.  
-This guide walks you through each feature and explains how to interpret the visualizations.
+This guide walks you through each feature and explains how to interpret the visualizations.  
 
 ---
 
