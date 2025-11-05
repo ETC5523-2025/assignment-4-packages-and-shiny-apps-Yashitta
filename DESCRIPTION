@@ -1,26 +1,39 @@
 Package: quarrisk
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Authors@R: c(
-    person(
-      "Jane", "Doe",
-      email = "jane@example.com",
-      role = c("aut", "cre")
-    )
-  )
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
+Title: Interactive Outbreak Risk Explorer for R0, Vaccine Effectiveness and Coverage
+Version: 1.0.0.0000
+Authors@R: 
+    person("Yashitta", "Bawa", , "yashittabawa@student.monash.edu", role = c("aut", "cre"))
+Description: Provides tools and an interactive Shiny dashboard to explore
+    quarantine/outbreak risk under different epidemic scenarios. Includes
+    datasets of outbreak probabilities and timing summaries across grids of
+    R0, vaccine effectiveness (VE), and vaccination coverage, plus helper
+    functions for slicing scenarios and plotting risk profiles. The dashboard
+    visualises probabilities and timing (median and tail days) via lines,
+    heatmaps and summary tables.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
-URL: https://github.com/Yashitta/quarrisk
-BugReports: https://github.com/Yashitta/quarrisk/issues
-Depends: 
-    R (>= 3.5)
-RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
-Imports: 
-    bslib,
+RoxygenNote: 7.3.2
+Depends:
+    R (>= 3.5)
+Imports:
+    shiny,
+    shinydashboard,
     ggplot2,
-    shiny
+    plotly,
+    DT,
+    dplyr,
+    tidyr,
+    tibble,
+    scales,
+    rlang,
+    methods,
+    bslib
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    pkgdown
+LazyData: true
+URL: https://github.com/ETC5523-2025/assignment-4-packages-and-shiny-apps-Yashitta.git
