@@ -2,8 +2,9 @@ url: https://ETC5523-2025.github.io/assignment-4-packages-and-shiny-apps-Yashitt
 
 template:
   bootstrap: 5
-  assets:
-    - pkgdown/extra.css
+  bootswatch: journal
+  bslib:
+    primary: "#c20e05"
 
 home:
   title: quarrisk
